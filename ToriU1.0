@@ -1,7 +1,7 @@
 --========================================================--
 --                 ToriH UI Framework
 --             Created by: Hothiptvn (VN)
---         Modified by ChatGPT – Startup Hidden Tab
+--         Modified by ChatGPT – Auto Setting Button
 --========================================================--
 
 local ToriH = {}
@@ -10,45 +10,43 @@ ToriH.__index = ToriH
 -- Services
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local UIS = game:GetService("UserInputService")
-local HttpService = game:GetService("HttpService")
 
 --========================================================--
---                  MAIN UI WINDOW
+--                    CREATE WINDOW
 --========================================================--
 
 function ToriH:CreateWindow(Info)
     Info = Info or {}
 
-    local window = {}
-    setmetatable(window, ToriH)
+    local window = setmetatable({}, ToriH)
 
     window.Title = Info.Title or "ToriH UI | by Hothiptvn"
     window.ConfigFolder = Info.ConfigFolder or "ToriH_Configs"
-    window.ThemeColor = Info.ThemeColor or Color3.fromRGB(80,120,255)
+    window.ThemeColor = Info.ThemeColor or Color3.fromRGB(85,120,255)
 
     if not isfolder(window.ConfigFolder) then
         makefolder(window.ConfigFolder)
     end
 
-    -- UI Instances
+    -- Main GUI
     local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
     ScreenGui.Name = "ToriH_UI"
+    window.ScreenGui = ScreenGui
 
     local Frame = Instance.new("Frame", ScreenGui)
-    Frame.Size = UDim2.new(0, 480, 0, 320)
-    Frame.Position = UDim2.new(0.5, -240, 0.5, -160)
-    Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    Frame.Size = UDim2.new(0,480,0,320)
+    Frame.Position = UDim2.new(0.5,-240,0.5,-160)
+    Frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
     Frame.Active = true
     Frame.Draggable = true
+    window.Frame = Frame
 
-    local UICorner = Instance.new("UICorner", Frame)
-    UICorner.CornerRadius = UDim.new(0, 7)
+    Instance.new("UICorner", Frame).CornerRadius = UDim.new(0,7)
 
     local Title = Instance.new("TextLabel", Frame)
-    Title.Size = UDim2.new(1, 0, 0, 30)
+    Title.Size = UDim2.new(1,0,0,30)
     Title.Text = window.Title
-    Title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    Title.BackgroundColor3 = Color3.fromRGB(40,40,40)
     Title.TextColor3 = Color3.new(1,1,1)
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = 16
@@ -56,117 +54,98 @@ function ToriH:CreateWindow(Info)
     Instance.new("UICorner", Title).CornerRadius = UDim.new(0,6)
 
     local Content = Instance.new("Frame", Frame)
-    Content.Size = UDim2.new(1, 0, 1, -30)
+    Content.Size = UDim2.new(1,0,1,-30)
     Content.Position = UDim2.new(0,0,0,30)
     Content.BackgroundTransparency = 1
-
-    window.Frame = Frame
-    window.ScreenGui = ScreenGui
     window.Content = Content
 
-    -- Toggle Button
-    local ToggleButton = Instance.new("TextButton", ScreenGui)
-    ToggleButton.Size = UDim2.new(0, 60, 0, 60)
-    ToggleButton.Position = UDim2.new(0, 20, 0.5, -30)
-    ToggleButton.BackgroundColor3 = window.ThemeColor
-    ToggleButton.Text = "Show"
-    ToggleButton.TextScaled = true
-    ToggleButton.Visible = false
+    --========================================================--
+    --                AUTO SETTING BUTTON (TRÒN)
+    --========================================================--
 
-    Instance.new("UICorner", ToggleButton).CornerRadius = UDim.new(1,0)
-    window.ToggleButton = ToggleButton
+    local SettingBtn = Instance.new("TextButton", ScreenGui)
+    SettingBtn.Size = UDim2.new(0,55,0,55)
+    SettingBtn.Position = UDim2.new(0,15,0.5,-27)
+    SettingBtn.BackgroundColor3 = window.ThemeColor
+    SettingBtn.TextColor3 = Color3.new(1,1,1)
+    SettingBtn.Text = "⚙"
+    SettingBtn.TextScaled = true
 
-    local Close = Instance.new("TextButton", Title)
-    Close.Size = UDim2.new(0, 35, 0, 28)
-    Close.Position = UDim2.new(1, -40, 0, 1)
-    Close.Text = "X"
-    Close.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-    Close.TextColor3 = Color3.new(1,1,1)
-    Instance.new("UICorner", Close).CornerRadius = UDim.new(0,6)
+    Instance.new("UICorner", SettingBtn).CornerRadius = UDim.new(1,0)
 
-    Close.MouseButton1Click:Connect(function()
-        Frame.Visible = false
-        ToggleButton.Visible = true
-    end)
+    window.SettingBtn = SettingBtn
 
-    ToggleButton.MouseButton1Click:Connect(function()
-        ToggleButton.Visible = false
-        Frame.Visible = true
-    end)
-
-    -- Tab store
+    -- Tabs Store
     window.Tabs = {}
+    window.CurrentTab = nil
 
-    -- Create startup hidden tab
-    local startupTab = window:CreateTab("__startup")
-    startupTab.Button.Visible = false
-    startupTab.Page.Visible = true
-    window.StartupTab = startupTab
+    -- Create Setting tab automatically
+    window:SettingTab = window:CreateTab("Settings")
+    window:SettingTab.Button.Visible = false  -- Hide the button from tab bar
 
-    -- Create Settings tab after startup
-    window:AddSettingsTab()
+    window:BuildSettings(window:SettingTab)
+
+    -- Clicking ⚙ always open setting tab
+    SettingBtn.MouseButton1Click:Connect(function()
+        window:ShowTab(window:SettingTab)
+    end)
 
     return window
 end
 
 --========================================================--
---                    TAB SYSTEM
+--                       TAB SYSTEM
 --========================================================--
 
 function ToriH:CreateTab(Name)
     local Tab = {}
 
     local Button = Instance.new("TextButton", self.Content)
-    Button.Size = UDim2.new(0, 100, 0, 28)
-    Button.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    Button.Size = UDim2.new(0,100,0,28)
+    Button.BackgroundColor3 = Color3.fromRGB(55,55,55)
     Button.Text = Name
     Button.TextColor3 = Color3.new(1,1,1)
 
     local Page = Instance.new("ScrollingFrame", self.Content)
-    Page.Size = UDim2.new(1, -110, 1, -10)
-    Page.Position = UDim2.new(0, 110, 0, 5)
+    Page.Size = UDim2.new(1,-110,1,-10)
+    Page.Position = UDim2.new(0,110,0,5)
     Page.Visible = false
-    Page.ScrollBarThickness = 4
     Page.BackgroundTransparency = 1
+    Page.ScrollBarThickness = 3
 
-    local Layout = Instance.new("UIListLayout", Page)
-    Layout.Padding = UDim.new(0,6)
-    Layout.SortOrder = Enum.SortOrder.LayoutOrder
+    Instance.new("UIListLayout", Page).Padding = UDim.new(0,6)
 
     Tab.Button = Button
     Tab.Page = Page
 
     table.insert(self.Tabs, Tab)
 
-    -- Tab switching
     Button.MouseButton1Click:Connect(function()
-        -- Hide all previous pages
-        for _, t in ipairs(self.Tabs) do
-            t.Page.Visible = false
-        end
-
-        -- Hide startup tab forever after switching
-        if self.StartupTab and self.StartupTab.Page.Visible then
-            self.StartupTab.Page.Visible = false
-            self.StartupTab.Button.Visible = false
-        end
-
-        Page.Visible = true
+        self:ShowTab(Tab)
     end)
 
     return Tab
 end
 
+function ToriH:ShowTab(Tab)
+    for _, t in ipairs(self.Tabs) do
+        t.Page.Visible = false
+    end
+
+    Tab.Page.Visible = true
+    self.CurrentTab = Tab
+end
+
 --========================================================--
---           ELEMENTS: LABEL, BUTTON, TOGGLE, INPUT
+--                    UI ELEMENTS
 --========================================================--
 
 function ToriH:AddLabel(Tab, Text)
     local lbl = Instance.new("TextLabel", Tab.Page)
-    lbl.Size = UDim2.new(1,-10,0,25)
-    lbl.Text = Text
-    lbl.TextColor3 = Color3.new(1,1,1)
+    lbl.Size = Udim2.new(1,-10,0,25)
     lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = Color3.new(1,1,1)
+    lbl.Text = Text
 end
 
 function ToriH:AddButton(Tab, Text, Callback)
@@ -175,7 +154,6 @@ function ToriH:AddButton(Tab, Text, Callback)
     btn.BackgroundColor3 = Color3.fromRGB(60,60,60)
     btn.TextColor3 = Color3.new(1,1,1)
     btn.Text = Text
-
     Instance.new("UICorner", btn)
 
     btn.MouseButton1Click:Connect(function()
@@ -190,16 +168,16 @@ function ToriH:AddToggle(Tab, Text, Default, Callback)
     tog.TextColor3 = Color3.new(1,1,1)
 
     local state = Default or false
-    local function refresh()
-        tog.Text = Text .. " : " .. (state and "ON" or "OFF")
+    local function update()
+        tog.Text = Text.." : "..(state and "ON" or "OFF")
     end
-    refresh()
+    update()
 
     Instance.new("UICorner", tog)
 
     tog.MouseButton1Click:Connect(function()
         state = not state
-        refresh()
+        update()
         if Callback then Callback(state) end
     end)
 end
@@ -219,49 +197,26 @@ function ToriH:AddInput(Tab, Placeholder, Callback)
 end
 
 --========================================================--
---                     SETTINGS TAB
+--                   BUILD SETTINGS TAB
 --========================================================--
 
-function ToriH:AddSettingsTab()
-    local tab = self:CreateTab("Settings")
+function ToriH:BuildSettings(tab)
+    self:AddLabel(tab, "⚙ ToriH Framework Settings")
 
-    self:AddLabel(tab, "ToriH Framework by Hothiptvn")
-
-    -- Delete UI
     self:AddButton(tab, "Delete UI", function()
         self.ScreenGui:Destroy()
     end)
 
-    -- Color Setting
-    self:AddLabel(tab, "Theme Color (RGB)")
+    self:AddLabel(tab, "Theme Color (RGB):")
     self:AddInput(tab, "R G B", function(text)
         local r,g,b = text:match("(%d+)%s+(%d+)%s+(%d+)")
         if r then
-            local newColor = Color3.fromRGB(tonumber(r),tonumber(g),tonumber(b))
-            self.ThemeColor = newColor
-            self.ToggleButton.BackgroundColor3 = newColor
+            local color = Color3.fromRGB(r,g,b)
+            self.ThemeColor = color
+            self.SettingBtn.BackgroundColor3 = color
         end
-    end)
-
-    -- Save Config
-    self:AddLabel(tab, "Save config name:")
-    local configName = ""
-
-    self:AddInput(tab, "Enter name", function(v)
-        configName = v
-    end)
-
-    self:AddButton(tab, "Save Config", function()
-        writefile(self.ConfigFolder.."/"..configName..".json", '{"Saved":true}')
-    end)
-
-    self:AddButton(tab, "Open Config Folder", function()
-        setclipboard(self.ConfigFolder)
     end)
 end
 
 --========================================================--
---                        RETURN
---========================================================--
-
 return ToriH
