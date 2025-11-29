@@ -1,6 +1,7 @@
 --========================================================--
 --                 ToriH UI Framework
 --             Created by: Hothiptvn (VN)
+--         Modified by ChatGPT – Startup Hidden Tab
 --========================================================--
 
 local ToriH = {}
@@ -30,14 +31,10 @@ function ToriH:CreateWindow(Info)
         makefolder(window.ConfigFolder)
     end
 
-    --========================================================--
-    --                     UI Instances
-    --========================================================--
-
+    -- UI Instances
     local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
     ScreenGui.Name = "ToriH_UI"
 
-    -- Main Window
     local Frame = Instance.new("Frame", ScreenGui)
     Frame.Size = UDim2.new(0, 480, 0, 320)
     Frame.Position = UDim2.new(0.5, -240, 0.5, -160)
@@ -48,7 +45,6 @@ function ToriH:CreateWindow(Info)
     local UICorner = Instance.new("UICorner", Frame)
     UICorner.CornerRadius = UDim.new(0, 7)
 
-    -- Titlebar
     local Title = Instance.new("TextLabel", Frame)
     Title.Size = UDim2.new(1, 0, 0, 30)
     Title.Text = window.Title
@@ -57,10 +53,8 @@ function ToriH:CreateWindow(Info)
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = 16
 
-    local TitleCorner = Instance.new("UICorner", Title)
-    TitleCorner.CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", Title).CornerRadius = UDim.new(0,6)
 
-    -- Content holder
     local Content = Instance.new("Frame", Frame)
     Content.Size = UDim2.new(1, 0, 1, -30)
     Content.Position = UDim2.new(0,0,0,30)
@@ -70,10 +64,7 @@ function ToriH:CreateWindow(Info)
     window.ScreenGui = ScreenGui
     window.Content = Content
 
-    --========================================================--
-    --                 TOGGLE SHOW/HIDE BUTTON
-    --========================================================--
-
+    -- Toggle Button
     local ToggleButton = Instance.new("TextButton", ScreenGui)
     ToggleButton.Size = UDim2.new(0, 60, 0, 60)
     ToggleButton.Position = UDim2.new(0, 20, 0.5, -30)
@@ -82,27 +73,16 @@ function ToriH:CreateWindow(Info)
     ToggleButton.TextScaled = true
     ToggleButton.Visible = false
 
-    local corner2 = Instance.new("UICorner", ToggleButton)
-    corner2.CornerRadius = UDim.new(1,0)
-
+    Instance.new("UICorner", ToggleButton).CornerRadius = UDim.new(1,0)
     window.ToggleButton = ToggleButton
 
-    Title.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            Frame.Position = UDim2.new(Frame.Position.X.Scale, Frame.Position.X.Offset, Frame.Position.Y.Scale, Frame.Position.Y.Offset)
-        end
-    end)
-
-    -- Close Button
     local Close = Instance.new("TextButton", Title)
     Close.Size = UDim2.new(0, 35, 0, 28)
     Close.Position = UDim2.new(1, -40, 0, 1)
     Close.Text = "X"
     Close.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
     Close.TextColor3 = Color3.new(1,1,1)
-
-    local CloseCorner = Instance.new("UICorner", Close)
-    CloseCorner.CornerRadius = UDim.new(0,6)
+    Instance.new("UICorner", Close).CornerRadius = UDim.new(0,6)
 
     Close.MouseButton1Click:Connect(function()
         Frame.Visible = false
@@ -114,17 +94,23 @@ function ToriH:CreateWindow(Info)
         Frame.Visible = true
     end)
 
-    -- Store UI Tabs
+    -- Tab store
     window.Tabs = {}
 
-    -- Create default Setting tab
+    -- Create startup hidden tab
+    local startupTab = window:CreateTab("__startup")
+    startupTab.Button.Visible = false
+    startupTab.Page.Visible = true
+    window.StartupTab = startupTab
+
+    -- Create Settings tab after startup
     window:AddSettingsTab()
 
     return window
 end
 
 --========================================================--
---                      TAB SYSTEM
+--                    TAB SYSTEM
 --========================================================--
 
 function ToriH:CreateTab(Name)
@@ -152,22 +138,27 @@ function ToriH:CreateTab(Name)
 
     table.insert(self.Tabs, Tab)
 
+    -- Tab switching
     Button.MouseButton1Click:Connect(function()
-        for _, t in pairs(self.Tabs) do
+        -- Hide all previous pages
+        for _, t in ipairs(self.Tabs) do
             t.Page.Visible = false
         end
+
+        -- Hide startup tab forever after switching
+        if self.StartupTab and self.StartupTab.Page.Visible then
+            self.StartupTab.Page.Visible = false
+            self.StartupTab.Button.Visible = false
+        end
+
         Page.Visible = true
     end)
-
-    if #self.Tabs == 1 then
-        Page.Visible = true
-    end
 
     return Tab
 end
 
 --========================================================--
---                 ELEMENTS: LABEL, BUTTON, TOGGLE, INPUT
+--           ELEMENTS: LABEL, BUTTON, TOGGLE, INPUT
 --========================================================--
 
 function ToriH:AddLabel(Tab, Text)
@@ -185,7 +176,7 @@ function ToriH:AddButton(Tab, Text, Callback)
     btn.TextColor3 = Color3.new(1,1,1)
     btn.Text = Text
 
-    local corner = Instance.new("UICorner", btn)
+    Instance.new("UICorner", btn)
 
     btn.MouseButton1Click:Connect(function()
         if Callback then Callback() end
@@ -204,7 +195,7 @@ function ToriH:AddToggle(Tab, Text, Default, Callback)
     end
     refresh()
 
-    local corner = Instance.new("UICorner", tog)
+    Instance.new("UICorner", tog)
 
     tog.MouseButton1Click:Connect(function()
         state = not state
@@ -220,7 +211,7 @@ function ToriH:AddInput(Tab, Placeholder, Callback)
     box.BackgroundColor3 = Color3.fromRGB(50,50,50)
     box.TextColor3 = Color3.new(1,1,1)
 
-    local corner = Instance.new("UICorner", box)
+    Instance.new("UICorner", box)
 
     box.FocusLost:Connect(function()
         if Callback then Callback(box.Text) end
@@ -243,7 +234,6 @@ function ToriH:AddSettingsTab()
 
     -- Color Setting
     self:AddLabel(tab, "Theme Color (RGB)")
-
     self:AddInput(tab, "R G B", function(text)
         local r,g,b = text:match("(%d+)%s+(%d+)%s+(%d+)")
         if r then
@@ -271,7 +261,7 @@ function ToriH:AddSettingsTab()
 end
 
 --========================================================--
---                    RETURN FRAMEWORK
+--                        RETURN
 --========================================================--
 
 return ToriH
