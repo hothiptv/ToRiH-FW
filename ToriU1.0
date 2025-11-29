@@ -1,5 +1,5 @@
 --========================================================--
---                   ToriH UI Framework FIXED v2
+--                   ToriH UI Framework FIXED v3
 --========================================================--
 
 local ToriH = {}
@@ -122,12 +122,13 @@ function ToriH:CreateTab(Name)
     btn.Text = Name
     Instance.new("UICorner", btn)
 
-    -- Page
+    -- Page (scrollable)
     local page = Instance.new("ScrollingFrame", self.Pages)
     page.Size = UDim2.new(1,0,1,0)
     page.CanvasSize = UDim2.new(0,0,0,0)
     page.BackgroundTransparency = 1
     page.ScrollBarThickness = 4
+    page.AutomaticCanvasSize = Enum.AutomaticSize.Y -- tự động tăng chiều cao
     page.Visible = false
 
     local layout = Instance.new("UIListLayout", page)
