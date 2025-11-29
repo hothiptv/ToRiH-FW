@@ -1,0 +1,168 @@
+ToriH UI Framework - User Guide (English)
+
+===============================
+1. Load ToriH
+===============================
+
+-- Load ToriH framework
+local ToriH = loadstring(game:HttpGet("https://raw.githubusercontent.com/hothiptv/ToRiH-FW/main/ToriU1.0"))()
+
+===============================
+2. Create a Window
+===============================
+
+local win = ToriH:CreateWindow({
+    Title = "Window Title",
+    ThemeColor = Color3.fromRGB(120, 255, 100) -- Main theme color
+})
+
+-- Optional: make sure GUI appears
+win.ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+win.MainFrame.Visible = true
+win.ToggleButton.Visible = false
+
+===============================
+3. Create Tabs
+===============================
+
+local tabExample = win:CreateTab("Tab Name")
+
+-- Tab holds all UI elements you will add
+
+===============================
+4. Add Labels
+===============================
+
+ToriH:AddLabel(tabExample, "This is a label")
+
+-- Use labels for instructions or section titles
+
+===============================
+5. Add Buttons
+===============================
+
+ToriH:AddButton(tabExample, "Click Me", function()
+    print("Button clicked!")
+end)
+
+-- Callback function executes when button is pressed
+
+===============================
+6. Add Toggles
+===============================
+
+ToriH:AddToggle(tabExample, "Enable Feature X", false, function(state)
+    print("Toggle state:", state)
+end)
+
+-- false = default OFF
+-- state = true if ON, false if OFF
+
+===============================
+7. Add Input Boxes
+===============================
+
+ToriH:AddInput(tabExample, "Enter number here", function(text)
+    local value = tonumber(text)
+    print("Input value:", value)
+end)
+
+-- text = string entered by user
+-- Can be used for WalkSpeed, JumpPower, etc.
+
+===============================
+8. Advanced Tips
+===============================
+
+-- GUI has built-in close button
+-- Clicking 'X' closes GUI and shows the toggle button
+-- You can manually open GUI:
+win.MainFrame.Visible = true
+win.ToggleButton.Visible = false
+
+-- Change background color:
+win.MainFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)   -- Dark
+win.MainFrame.BackgroundColor3 = Color3.fromRGB(235,235,235) -- Light
+
+-- Multiple tabs & elements supported
+-- UIListLayout handles element arrangement automatically
+
+===============================
+9. Example: Player Utilities Tab
+===============================
+
+local tabPlayer = win:CreateTab("Player")
+ToriH:AddLabel(tabPlayer, "Player Utilities")
+
+-- WalkSpeed
+local speedValue = 16
+ToriH:AddInput(tabPlayer, "Walk Speed", function(text)
+    local num = tonumber(text)
+    if num then speedValue = num end
+end)
+
+ToriH:AddToggle(tabPlayer, "Enable Speed", false, function(state)
+    local plr = game.Players.LocalPlayer
+    if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+        plr.Character.Humanoid.WalkSpeed = state and speedValue or 16
+    end
+end)
+
+-- FlyJump
+ToriH:AddToggle(tabPlayer, "Fly Jump", false, function(state)
+    local plr = game.Players.LocalPlayer
+    if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+        plr.Character.Humanoid.JumpPower = state and 100 or 50
+        plr.Character.Humanoid.UseJumpPower = true
+    end
+end)
+
+-- ESP Players
+local ESPMarkers = {}
+local playerESPEnabled = false
+
+ToriH:AddToggle(tabPlayer, "ESP Players", false, function(state)
+    playerESPEnabled = state
+    if not state then
+        for _, box in pairs(ESPMarkers) do
+            if box then box:Destroy() end
+        end
+        ESPMarkers = {}
+    end
+end)
+
+-- Render loop for ESP
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+RunService.RenderStepped:Connect(function()
+    if playerESPEnabled then
+        for _, plr in pairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                if not ESPMarkers[plr] then
+                    local box = Instance.new("BoxHandleAdornment")
+                    box.Adornee = plr.Character.HumanoidRootPart
+                    box.Color3 = Color3.fromRGB(255,0,0)
+                    box.AlwaysOnTop = true
+                    box.Size = Vector3.new(2,3,1)
+                    box.Parent = workspace
+                    ESPMarkers[plr] = box
+                end
+            end
+        end
+    end
+end)
+
+===============================
+10. Summary
+===============================
+
+1. Create Window → CreateTab → Add UI Elements  
+2. Elements supported: Label, Button, Toggle, Input  
+3. GUI auto-layout with UIListLayout  
+4. Easy to integrate with gameplay scripts like Speed, FlyJump, ESP
+
+---
+
+End of ToriH UI Framework Guide
