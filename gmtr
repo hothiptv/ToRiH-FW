@@ -1,33 +1,61 @@
-local map = {
-    ["0001"]="a",["0002"]="b",["0003"]="c",["0004"]="d",["0005"]="e",
-    ["0006"]="f",["0007"]="g",["0008"]="h",["0009"]="i",["0010"]="j",
-    ["0011"]="k",["0012"]="l",["0013"]="m",["0014"]="n",["0015"]="o",
-    ["0016"]="p",["0017"]="q",["0018"]="r",["0019"]="s",["0020"]="t",
-    ["0021"]="u",["0022"]="v",["0023"]="w",["0024"]="x",["0025"]="y",
-    ["0026"]="z",
-
-    ["1000"]="1",["2000"]="2",["3000"]="3",["4000"]="4",["5000"]="5",
-    ["6000"]="6",["7000"]="7",["8000"]="8",["9000"]="9",["0000"]="0",
-
-    ["c"]="+",["b"]="=",["n"]="*",["t"]="-",
-    [":"]=":",["_"]=" "
-}
-
 return function(data)
-    local out = ""
+    local password = "0904505983"
 
-    for part in string.gmatch(data, "[^/]+") do
-        local upper = part:match("h$")
-        part = part:gsub("h","")
+    local map = {}
+    local alphabet = "abcdefghijklmnopqrstuvwxyz"
 
-        local char = map[part] or ""
-
-        if upper then
-            char = string.upper(char)
-        end
-
-        out = out..char
+    for i = 1, #alphabet do
+        local key = string.format("%04d", i)
+        map[key] = alphabet:sub(i,i)
     end
 
-    loadstring(out)()
+    function decode(str)
+        local t = {}
+        for token in string.gmatch(str,"[^/]+") do
+
+            if token == "_" then
+                table.insert(t," ")
+            
+            elseif #token >= 4 then
+                local num = token:sub(1,4)
+                local letter = map[num] or ""
+
+                local tone = token:sub(5,5)
+                if tone == "s" then letter = letter .. "́"
+                elseif tone == "f" then letter = letter .. "̀"
+                elseif tone == "r" then letter = letter .. "̉"
+                elseif tone == "x" then letter = letter .. "̃"
+                elseif tone == "j" then letter = letter .. "̣"
+                end
+
+                if token:find("h") then
+                    letter = string.upper(letter)
+                end
+
+                table.insert(t, letter)
+
+            elseif tonumber(token) then
+                table.insert(t, tostring(tonumber(token)/1000))
+            
+            elseif token == "c" then table.insert(t,"+")
+            elseif token == "b" then table.insert(t,"=")
+            elseif token == "n" then table.insert(t,"*")
+            elseif token == "t" then table.insert(t,"-")
+            else
+                table.insert(t,token)
+            end
+        end
+
+        return table.concat(t)
+    end
+
+    if password ~= "0904505983" then
+        error("Wrong password")
+    end
+
+    local real = decode(data)
+    local f = loadstring(real)
+    if f then
+        f()
+    end
 end
