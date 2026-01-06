@@ -2,8 +2,8 @@ return {
     -- Cấu hình Menu
     ["MenuTitle"] = "ANSCRIPT | SCRIPT TỔNG HỢP",
     ["AuthorName"] = "Nguyễn Trọng An",
-    ["Version"] = "1.5.0",
-    ["Status"] = "on", -- "on" là chạy, "off" là bảo trì
+    ["Version"] = "1.0",
+    ["Status"] = "off", -- "on" là chạy, "off" là bảo trì
     
     -- Danh sách Script (Định dạng script_Tên)
     ["script_Aimbot"] = "https://raw.githubusercontent.com/yzeedw/Mortalv2-main/main/UNIVERSAL%20AIMBOT",
