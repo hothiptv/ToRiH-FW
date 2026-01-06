@@ -1,0 +1,102 @@
+--========================================================--
+--                   ToriH UI Framework V3
+--========================================================--
+
+local ToriH = {}
+ToriH.__index = ToriH
+
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Helper: Get Parent
+local function GetGuiParent()
+    return (gethui and gethui()) or game:FindFirstChildOfClass("CoreGui")
+end
+
+--========================================================--
+--                  NOTIFY SYSTEM V3 (Gọn & Đẹp)
+--========================================================--
+function ToriH:Notify(title, text, duration)
+    duration = duration or 3
+    local container = GetGuiParent():FindFirstChild("ToriH_NotifContainer")
+    if not container then
+        container = Instance.new("Frame")
+        container.Name = "ToriH_NotifContainer"
+        container.Size = UDim2.new(0, 250, 1, 0)
+        container.Position = UDim2.new(1, -260, 0, 10)
+        container.BackgroundTransparency = 1
+        container.Parent = GetGuiParent()
+        local layout = Instance.new("UIListLayout", container)
+        layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+        layout.Padding = UDim.new(0, 10)
+    end
+
+    local notif = Instance.new("Frame")
+    notif.Size = UDim2.new(1, 0, 0, 60)
+    notif.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    notif.BorderSizePixel = 0
+    notif.BackgroundTransparency = 1
+    notif.Parent = container
+
+    local uic = Instance.new("UICorner", notif)
+    uic.CornerRadius = UDim.new(0, 6)
+
+    local stroke = Instance.new("UIStroke", notif)
+    stroke.Color = Color3.fromRGB(120, 255, 100)
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Transparency = 1
+
+    local tLabel = Instance.new("TextLabel", notif)
+    tLabel.Text = title:upper()
+    tLabel.Size = UDim2.new(1, -10, 0, 25)
+    tLabel.Position = UDim2.new(0, 10, 0, 5)
+    tLabel.BackgroundTransparency = 1
+    tLabel.TextColor3 = Color3.fromRGB(120, 255, 100)
+    tLabel.Font = Enum.Font.GothamBold
+    tLabel.TextSize = 13
+    tLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+    local desc = Instance.new("TextLabel", notif)
+    desc.Text = text
+    desc.Size = UDim2.new(1, -10, 0, 20)
+    desc.Position = UDim2.new(0, 10, 0, 25)
+    desc.BackgroundTransparency = 1
+    desc.TextColor3 = Color3.fromRGB(200, 200, 200)
+    desc.Font = Enum.Font.Gotham
+    desc.TextSize = 12
+    desc.TextXAlignment = Enum.TextXAlignment.Left
+
+    -- Anime show
+    TweenService:Create(notif, TweenInfo.new(0.5), {BackgroundTransparency = 0.1}):Play()
+    TweenService:Create(stroke, TweenInfo.new(0.5), {Transparency = 0.5}):Play()
+
+    task.delay(duration, function()
+        TweenService:Create(notif, TweenInfo.new(0.5), {BackgroundTransparency = 1, TextTransparency = 1}):Play()
+        TweenService:Create(stroke, TweenInfo.new(0.5), {Transparency = 1}):Play()
+        task.wait(0.5)
+        notif:Destroy()
+    end)
+end
+
+--========================================================--
+--                  WINDOW CREATION V3
+--========================================================--
+function ToriH:CreateWindow(info)
+    info = info or {}
+    local self = setmetatable({}, ToriH)
+
+    self.Title = info.Title or "ToRiH V3"
+    self.ThemeColor = info.ThemeColor or Color3.fromRGB(120, 255, 100)
+    self.Size = info.Size or Vector2.new(550, 380)
+
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "ToriH_V3"
+    gui.Parent = GetGuiParent()
+    gui.ResetOnSpawn = false
+    self.ScreenGui = gui
+
+    -- Main Frame
+    local main = Instance.new("Frame
