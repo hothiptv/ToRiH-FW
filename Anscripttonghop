@@ -1,14 +1,13 @@
 return {
-    -- Cấu hình Menu
-    ["MenuTitle"] = "ANSCRIPT | SCRIPT TỔNG HỢP",
+    ["Status"] = "on", -- Chỉnh "off" để bảo trì, "on" để chạy
+    ["MenuTitle"] = "ANSCRIPT | ",SCRIPT TỔNG HỢP
     ["AuthorName"] = "Nguyễn Trọng An",
     ["Version"] = "1.0",
-    ["Status"] = "off", -- "on" là chạy, "off" là bảo trì
     
-    -- Danh sách Script (Định dạng script_Tên)
-    ["script_Aimbot"] = "https://raw.githubusercontent.com/yzeedw/Mortalv2-main/main/UNIVERSAL%20AIMBOT",
+    -- Danh sách Script (Phải có tiền tố script_)
+    ["script_Aimbot Universal"] = "https://raw.githubusercontent.com/yzeedw/Mortalv2-main/main/UNIVERSAL%20AIMBOT",
     ["script_Demonology"] = "https://raw.githubusercontent.com/jwaltson91/Pleiadex/refs/heads/main/demonology.lua",
     ["script_Dịch (by me)"] = "https://raw.githubusercontent.com/hothiptv/Script-SCR/refs/heads/main/Dich",
     ["script_Infinite Yield"] = "https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source",
-    ["script_TSB"] = "https://raw.githubusercontent.com/ATrainz/Phantasm/refs/heads/main/Games/TSB.lua",
+    ["script_TSB (Phantasm)"] = "https://raw.githubusercontent.com/ATrainz/Phantasm/refs/heads/main/Games/TSB.lua",
 }
