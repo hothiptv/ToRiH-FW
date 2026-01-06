@@ -1,5 +1,5 @@
 return {
-    ["Status"] = "on", -- Chỉnh "off" để bảo trì, "on" để chạy
+    ["Status"] = "off", -- Chỉnh "off" để bảo trì, "on" để chạy
     ["MenuTitle"] = "ANSCRIPT | SCRIPT TỔNG HỢP",
     ["AuthorName"] = "Nguyễn Trọng An",
     ["Version"] = "1.0",
