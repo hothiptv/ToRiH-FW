@@ -1,38 +1,46 @@
---========================================================--
---                ToriH UI Framework V3 PRESTIGE
---                Developer: NGUYỄN TRỌNG AN
---========================================================--
+--====================================================================--
+--                TORIH UI FRAMEWORK V3 - THE TITAN
+--                DEVELOPER: NGUYỄN TRỌNG AN
+--                VERSION: 3.1.0 (ULTIMATE PRESTIGE)
+--====================================================================--
 
-local ToriH = {}
+local ToriH = {
+    Elements = {},
+    Themes = {
+        Default = Color3.fromRGB(0, 255, 127),
+        Ruby = Color3.fromRGB(255, 60, 60),
+        Ocean = Color3.fromRGB(0, 150, 255),
+        Gold = Color3.fromRGB(255, 200, 0),
+        Purple = Color3.fromRGB(180, 50, 255)
+    },
+    Flags = {},
+    Signals = {}
+}
 ToriH.__index = ToriH
 
--- Services
+-- [[ SERVICES ]] --
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
+local TextService = game:GetService("TextService")
 local CoreGui = (gethui and gethui()) or game:FindFirstChildOfClass("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
--- Variables
-local ViewportSize = workspace.CurrentCamera.ViewportSize
+-- [[ ANIMATION CONFIG ]] --
+local T_Info = TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
---========================================================--
---                  UTILITY FUNCTIONS
---========================================================--
+-- [[ UTILITIES ]] --
 local function Create(class, props)
     local inst = Instance.new(class)
-    for i, v in pairs(props) do
-        inst[i] = v
-    end
+    for i, v in pairs(props) do inst[i] = v end
     return inst
 end
 
 local function MakeDraggable(obj, dragObj)
-    local dragging, dragInput, dragStart, startPos
+    local dragging, dragStart, startPos
     dragObj = dragObj or obj
-    
     dragObj.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
@@ -40,14 +48,12 @@ local function MakeDraggable(obj, dragObj)
             startPos = obj.Position
         end
     end)
-    
     UserInputService.InputChanged:Connect(function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
             obj.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
-    
     UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = false
@@ -59,623 +65,396 @@ local function Ripple(obj)
     task.spawn(function()
         local mousePos = UserInputService:GetMouseLocation()
         local objPos = obj.AbsolutePosition
-        local relX, relY = mousePos.X - objPos.X, mousePos.Y - objPos.Y
+        local relX, relY = mousePos.X - objPos.X, mousePos.Y - (objPos.Y + 36)
         
         local circle = Create("Frame", {
-            Parent = obj,
-            BackgroundColor3 = Color3.new(1, 1, 1),
-            BackgroundTransparency = 0.7,
-            BorderSizePixel = 0,
-            Position = UDim2.new(0, relX, 0, relY),
-            Size = UDim2.new(0, 0, 0, 0),
-            ZIndex = obj.ZIndex + 1
+            Parent = obj, BackgroundColor3 = Color3.new(1, 1, 1),
+            BackgroundTransparency = 0.8, BorderSizePixel = 0,
+            Position = UDim2.new(0, relX, 0, relY), Size = UDim2.new(0, 0, 0, 0),
+            ZIndex = 15, ClipsDescendants = true
         })
         Create("UICorner", {Parent = circle, CornerRadius = UDim.new(1, 0)})
-        
-        local tween = TweenService:Create(circle, TweenInfo.new(0.5), {
-            Size = UDim2.new(0, 200, 0, 200),
-            Position = UDim2.new(0, relX - 100, 0, relY - 100),
+        TweenService:Create(circle, TweenInfo.new(0.6), {
+            Size = UDim2.new(0, 300, 0, 300),
+            Position = UDim2.new(0, relX - 150, 0, relY - 150),
             BackgroundTransparency = 1
-        })
-        tween:Play()
-        tween.Completed:Wait()
-        circle:Destroy()
+        }):Play()
+        task.wait(0.6) circle:Destroy()
     end)
 end
 
 --========================================================--
---                  INTRO SYSTEM
+--                  NOTIFICATION SYSTEM
 --========================================================--
-function ToriH:PlayIntro(title, author)
-    local introGui = Create("ScreenGui", {Parent = CoreGui, Name = "ToriH_Intro"})
-    local blur = Create("BlurEffect", {Parent = game:GetService("Lighting"), Size = 0})
+function ToriH:Notify(title, desc, duration)
+    local notif = Create("Frame", {
+        Parent = self.Gui, Size = UDim2.new(0, 280, 0, 85),
+        Position = UDim2.new(1, 300, 1, -100), BackgroundColor3 = Color3.fromRGB(15, 15, 15),
+        ZIndex = 1000, BorderSizePixel = 0
+    })
+    Create("UICorner", {Parent = notif, CornerRadius = UDim.new(0, 8)})
+    Create("UIStroke", {Parent = notif, Color = self.ThemeColor, Thickness = 1.2})
     
-    local container = Create("Frame", {
-        Parent = introGui,
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundColor3 = Color3.fromRGB(5, 5, 5),
-        BackgroundTransparency = 1
+    local tLbl = Create("TextLabel", {
+        Parent = notif, Size = UDim2.new(1, -20, 0, 30), Position = UDim2.new(0, 12, 0, 8),
+        BackgroundTransparency = 1, Text = title, TextColor3 = self.ThemeColor,
+        Font = Enum.Font.GothamBold, TextSize = 15, TextXAlignment = 0
     })
     
-    local text = Create("TextLabel", {
-        Parent = container,
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        Text = "",
-        TextColor3 = Color3.new(1, 1, 1),
-        Font = Enum.Font.GothamBold,
-        TextSize = 28
+    local dLbl = Create("TextLabel", {
+        Parent = notif, Size = UDim2.new(1, -24, 0, 40), Position = UDim2.new(0, 12, 0, 35),
+        BackgroundTransparency = 1, Text = desc, TextColor3 = Color3.fromRGB(200, 200, 200),
+        Font = Enum.Font.Gotham, TextSize = 13, TextXAlignment = 0, TextWrapped = true, TextYAlignment = 0
     })
 
-    TweenService:Create(blur, TweenInfo.new(1), {Size = 24}):Play()
-    TweenService:Create(container, TweenInfo.new(1), {BackgroundTransparency = 0.2}):Play()
+    local timer = Create("Frame", {
+        Parent = notif, Size = UDim2.new(1, 0, 0, 3), Position = UDim2.new(0, 0, 1, -3),
+        BackgroundColor3 = self.ThemeColor, BorderSizePixel = 0
+    })
+
+    notif:TweenPosition(UDim2.new(1, -300, 1, -100), "Out", "Quart", 0.5)
+    TweenService:Create(timer, TweenInfo.new(duration or 3, Enum.EasingStyle.Linear), {Size = UDim2.new(0,0,0,3)}):Play()
     
-    local fullText = title .. "\nBy " .. author
-    for i = 1, #fullText do
-        text.Text = string.sub(fullText, 1, i)
-        task.wait(0.04)
-    end
-    
-    task.wait(1.5)
-    
-    TweenService:Create(text, TweenInfo.new(1), {TextTransparency = 1}):Play()
-    TweenService:Create(blur, TweenInfo.new(1), {Size = 0}):Play()
-    local lastTween = TweenService:Create(container, TweenInfo.new(1), {BackgroundTransparency = 1})
-    lastTween:Play()
-    lastTween.Completed:Wait()
-    introGui:Destroy()
-    blur:Destroy()
+    task.delay(duration or 3, function()
+        notif:TweenPosition(UDim2.new(1, 300, 1, -100), "In", "Quart", 0.5)
+        task.wait(0.5) notif:Destroy()
+    end)
 end
 
 --========================================================--
---                  MAIN UI CLASS
+--                  MAIN WINDOW INIT
 --========================================================--
 function ToriH.new(options)
     local self = setmetatable({}, ToriH)
     self.Title = options.Title or "TORIH HUB"
     self.Author = options.Author or "NGUYỄN TRỌNG AN"
-    self.ThemeColor = options.ThemeColor or Color3.fromRGB(0, 255, 150)
-    self.RGB = false
+    self.ThemeColor = options.ThemeColor or Color3.fromRGB(0, 255, 127)
     self.Tabs = {}
-    self.Closed = false
+    self.RGB = false
+    self.Keybind = Enum.KeyCode.RightControl
 
-    -- Play Intro
-    task.spawn(function() self:PlayIntro(self.Title, self.Author) end)
+    -- Intro
+    task.spawn(function()
+        local introGui = Create("ScreenGui", {Parent = CoreGui})
+        local blur = Create("BlurEffect", {Parent = game:GetService("Lighting"), Size = 0})
+        local bg = Create("Frame", {Parent = introGui, Size = UDim2.new(1,0,1,0), BackgroundColor3 = Color3.new(0,0,0), BackgroundTransparency = 1})
+        local lbl = Create("TextLabel", {Parent = bg, Size = UDim2.new(1,0,1,0), BackgroundTransparency = 1, Text = "", TextColor3 = Color3.new(1,1,1), Font = 17, TextSize = 38})
+        
+        TweenService:Create(blur, TweenInfo.new(1), {Size = 20}):Play()
+        TweenService:Create(bg, TweenInfo.new(1), {BackgroundTransparency = 0.2}):Play()
+        local txt = self.Title .. "\nBY " .. self.Author
+        for i = 1, #txt do lbl.Text = string.sub(txt, 1, i) task.wait(0.04) end
+        task.wait(1.5)
+        TweenService:Create(blur, TweenInfo.new(1), {Size = 0}):Play()
+        local t = TweenService:Create(bg, TweenInfo.new(1), {BackgroundTransparency = 1})
+        t:Play() t.Completed:Wait() introGui:Destroy() blur:Destroy()
+    end)
 
-    -- Core Gui
-    self.Gui = Create("ScreenGui", {Parent = CoreGui, Name = "ToriH_V3"})
+    self.Gui = Create("ScreenGui", {Parent = CoreGui, Name = "ToriH_Titan"})
     
-    -- Floating Button (Nút hiện UI)
-    local floatBtn = Create("TextButton", {
-        Parent = self.Gui,
-        Size = UDim2.new(0, 60, 0, 60),
-        Position = UDim2.new(0, 50, 0.5, -30),
-        BackgroundColor3 = Color3.fromRGB(20, 20, 20),
-        Text = "TH",
-        Font = Enum.Font.GothamBold,
-        TextSize = 20,
-        TextColor3 = Color3.new(1, 1, 1),
-        Visible = false,
-        AutoButtonColor = false,
-        ZIndex = 100
-    })
-    Create("UICorner", {Parent = floatBtn, CornerRadius = UDim.new(1, 0)})
-    local floatStroke = Create("UIStroke", {Parent = floatBtn, Color = self.ThemeColor, Thickness = 2})
-    MakeDraggable(floatBtn)
-
-    -- Main Frame
     local main = Create("Frame", {
-        Parent = self.Gui,
-        Size = UDim2.new(0, 0, 0, 0),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        BackgroundColor3 = Color3.fromRGB(15, 15, 15),
-        ClipsDescendants = true,
-        BorderSizePixel = 0
+        Parent = self.Gui, Size = UDim2.new(0, 620, 0, 420), Position = UDim2.new(0.5, -310, 0.5, -210),
+        BackgroundColor3 = Color3.fromRGB(12, 12, 12), BorderSizePixel = 0, ClipsDescendants = true
     })
-    self.MainFrame = main
+    self.Main = main
     Create("UICorner", {Parent = main, CornerRadius = UDim.new(0, 10)})
-    local mainStroke = Create("UIStroke", {Parent = main, Color = self.ThemeColor, Thickness = 2})
-    
-    -- Header
-    local header = Create("Frame", {
-        Parent = main,
-        Size = UDim2.new(1, 0, 0, 45),
-        BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    local stroke = Create("UIStroke", {Parent = main, Color = self.ThemeColor, Thickness = 2})
+
+    local side = Create("Frame", {
+        Parent = main, Size = UDim2.new(0, 180, 1, 0), BackgroundColor3 = Color3.fromRGB(18, 18, 18)
     })
-    Create("UICorner", {Parent = header, CornerRadius = UDim.new(0, 10)})
+    Create("UICorner", {Parent = side, CornerRadius = UDim.new(0, 10)})
     
     local titleLbl = Create("TextLabel", {
-        Parent = header,
-        Size = UDim2.new(1, -100, 1, 0),
-        Position = UDim2.new(0, 20, 0, 0),
-        BackgroundTransparency = 1,
-        Text = self.Title .. " | " .. self.Author,
-        TextColor3 = Color3.new(1, 1, 1),
-        Font = Enum.Font.GothamBold,
-        TextSize = 16,
-        TextXAlignment = Enum.TextXAlignment.Left
+        Parent = side, Size = UDim2.new(1, 0, 0, 50), Position = UDim2.new(0, 0, 0, 10),
+        BackgroundTransparency = 1, Text = self.Title, TextColor3 = self.ThemeColor,
+        Font = Enum.Font.GothamBold, TextSize = 20
     })
 
-    local closeBtn = Create("TextButton", {
-        Parent = header,
-        Size = UDim2.new(0, 35, 0, 35),
-        Position = UDim2.new(1, -45, 0.5, -17),
-        BackgroundTransparency = 1,
-        Text = "X",
-        Font = Enum.Font.GothamBold,
-        TextColor3 = Color3.fromRGB(255, 80, 80),
-        TextSize = 18
+    local scroll = Create("ScrollingFrame", {
+        Parent = side, Size = UDim2.new(1, 0, 1, -70), Position = UDim2.new(0, 0, 0, 60),
+        BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 0
     })
+    Create("UIListLayout", {Parent = scroll, Padding = UDim.new(0, 5), HorizontalAlignment = 1})
+    self.TabList = scroll
 
-    -- Sidebar
-    local sidebar = Create("ScrollingFrame", {
-        Parent = main,
-        Size = UDim2.new(0, 160, 1, -45),
-        Position = UDim2.new(0, 0, 0, 45),
-        BackgroundColor3 = Color3.fromRGB(18, 18, 18),
-        BorderSizePixel = 0,
-        ScrollBarThickness = 0
-    })
-    local sideList = Create("UIListLayout", {Parent = sidebar, Padding = UDim.new(0, 5), HorizontalAlignment = Enum.HorizontalAlignment.Center})
-    Create("UIPadding", {Parent = sidebar, PaddingTop = UDim.new(0, 10)})
-
-    -- Container
-    local container = Create("Frame", {
-        Parent = main,
-        Size = UDim2.new(1, -170, 1, -55),
-        Position = UDim2.new(0, 165, 0, 50),
+    self.Container = Create("Frame", {
+        Parent = main, Size = UDim2.new(1, -190, 1, -20), Position = UDim2.new(0, 185, 0, 10),
         BackgroundTransparency = 1
     })
-    self.PageContainer = container
 
     -- RGB Logic
     RunService.RenderStepped:Connect(function()
         if self.RGB then
-            local color = Color3.fromHSV(tick() % 5 / 5, 0.8, 1)
-            mainStroke.Color = color
-            floatStroke.Color = color
+            stroke.Color = Color3.fromHSV(tick() % 5 / 5, 0.8, 1)
         else
-            mainStroke.Color = self.ThemeColor
-            floatStroke.Color = self.ThemeColor
+            stroke.Color = self.ThemeColor
         end
     end)
 
-    -- Toggle Logic
-    closeBtn.MouseButton1Click:Connect(function()
-        Ripple(closeBtn)
-        main:TweenSize(UDim2.new(0, 0, 0, 0), "In", "Quart", 0.4)
-        task.wait(0.4)
-        main.Visible = false
-        floatBtn.Visible = true
+    -- Keybind Toggle
+    UserInputService.InputBegan:Connect(function(input, gpe)
+        if not gpe and input.KeyCode == self.Keybind then
+            main.Visible = not main.Visible
+        end
     end)
 
-    floatBtn.MouseButton1Click:Connect(function()
-        Ripple(floatBtn)
-        main.Visible = true
-        main:TweenSize(UDim2.new(0, 580, 0, 400), "Out", "Back", 0.5)
-        floatBtn.Visible = false
-    end)
-
-    MakeDraggable(main, header)
-
-    -- Init Size
-    main:TweenSize(UDim2.new(0, 580, 0, 400), "Out", "Back", 0.7)
-    
-    self:CreateSettingsTab()
+    MakeDraggable(main, side)
     return self
 end
 
 --========================================================--
---                  ELEMENT METHODS
+--                  ELEMENT CREATION
 --========================================================--
 function ToriH:CreateTab(name)
-    local tabBtn = Create("TextButton", {
-        Parent = self.Gui.ToriH_V3.Frame.ScrollingFrame,
-        Size = UDim2.new(0, 140, 0, 38),
-        BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-        Text = name,
-        Font = Enum.Font.GothamBold,
-        TextColor3 = Color3.fromRGB(180, 180, 180),
-        TextSize = 13,
-        AutoButtonColor = false
+    local tab = {Name = name, Elements = {}}
+    
+    local btn = Create("TextButton", {
+        Parent = self.TabList, Size = UDim2.new(0, 160, 0, 40),
+        BackgroundColor3 = Color3.fromRGB(25, 25, 25), Text = "   " .. name,
+        TextColor3 = Color3.fromRGB(200, 200, 200), Font = Enum.Font.GothamBold,
+        TextSize = 13, TextXAlignment = 0, AutoButtonColor = false
     })
-    Create("UICorner", {Parent = tabBtn, CornerRadius = UDim.new(0, 6)})
+    Create("UICorner", {Parent = btn})
     
     local page = Create("ScrollingFrame", {
-        Parent = self.PageContainer,
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        Visible = false,
-        ScrollBarThickness = 2,
-        ScrollBarImageColor3 = self.ThemeColor,
-        BorderSizePixel = 0
+        Parent = self.Container, Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 2,
+        ScrollBarImageColor3 = self.ThemeColor, Visible = false
     })
     Create("UIListLayout", {Parent = page, Padding = UDim.new(0, 8)})
-    Create("UIPadding", {Parent = page, PaddingLeft = UDim.new(0, 5), PaddingRight = UDim.new(0, 5)})
-
-    tabBtn.MouseButton1Click:Connect(function()
-        Ripple(tabBtn)
-        for _, v in pairs(self.Tabs) do
-            v.Page.Visible = false
-            TweenService:Create(v.Btn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(30, 30, 30), TextColor3 = Color3.fromRGB(180, 180, 180)}):Play()
+    
+    btn.MouseButton1Click:Connect(function()
+        Ripple(btn)
+        for _, t in pairs(self.Tabs) do
+            t.Page.Visible = false
+            TweenService:Create(t.Btn, T_Info, {BackgroundColor3 = Color3.fromRGB(25, 25, 25), TextColor3 = Color3.fromRGB(200, 200, 200)}):Play()
         end
         page.Visible = true
-        TweenService:Create(tabBtn, TweenInfo.new(0.3), {BackgroundColor3 = self.ThemeColor, TextColor3 = Color3.fromRGB(10, 10, 10)}):Play()
+        TweenService:Create(btn, T_Info, {BackgroundColor3 = self.ThemeColor, TextColor3 = Color3.fromRGB(15, 15, 15)}):Play()
     end)
 
-    local tabData = {Btn = tabBtn, Page = page}
-    table.insert(self.Tabs, tabData)
+    tab.Btn = btn
+    tab.Page = page
+    table.insert(self.Tabs, tab)
     
     if #self.Tabs == 1 then
         page.Visible = true
-        tabBtn.BackgroundColor3 = self.ThemeColor
-        tabBtn.TextColor3 = Color3.fromRGB(10, 10, 10)
+        btn.BackgroundColor3 = self.ThemeColor
+        btn.TextColor3 = Color3.fromRGB(15, 15, 15)
     end
     
-    return page
+    return tab
 end
 
-function ToriH:AddToggle(page, text, default, callback)
-    local frame = Create("Frame", {
-        Parent = page,
-        Size = UDim2.new(1, 0, 0, 40),
-        BackgroundColor3 = Color3.fromRGB(22, 22, 22),
-        BorderSizePixel = 0
+-- SECTION (Của Rayfield/Orion)
+function ToriH:AddSection(tab, text)
+    local sec = Create("Frame", {
+        Parent = tab.Page, Size = UDim2.new(1, -10, 0, 30), BackgroundTransparency = 1
     })
-    Create("UICorner", {Parent = frame, CornerRadius = UDim.new(0, 6)})
-    
-    local label = Create("TextLabel", {
-        Parent = frame,
-        Size = UDim2.new(1, -60, 1, 0),
-        Position = UDim2.new(0, 15, 0, 0),
-        BackgroundTransparency = 1,
-        Text = text,
-        Font = Enum.Font.Gotham,
-        TextColor3 = Color3.new(1, 1, 1),
-        TextSize = 14,
-        TextXAlignment = Enum.TextXAlignment.Left
+    local l = Create("TextLabel", {
+        Parent = sec, Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1,
+        Text = text:upper(), TextColor3 = self.ThemeColor, Font = Enum.Font.GothamBold,
+        TextSize = 12, TextXAlignment = 0
     })
-
-    local toggleBtn = Create("TextButton", {
-        Parent = frame,
-        Size = UDim2.new(0, 40, 0, 20),
-        Position = UDim2.new(1, -50, 0.5, -10),
-        BackgroundColor3 = default and self.ThemeColor or Color3.fromRGB(60, 60, 60),
-        Text = ""
-    })
-    Create("UICorner", {Parent = toggleBtn, CornerRadius = UDim.new(1, 0)})
-    
-    local circle = Create("Frame", {
-        Parent = toggleBtn,
-        Size = UDim2.new(0, 16, 0, 16),
-        Position = default and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8),
-        BackgroundColor3 = Color3.new(1, 1, 1)
-    })
-    Create("UICorner", {Parent = circle, CornerRadius = UDim.new(1, 0)})
-
-    local state = default
-    toggleBtn.MouseButton1Click:Connect(function()
-        state = not state
-        local targetPos = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
-        local targetColor = state and self.ThemeColor or Color3.fromRGB(60, 60, 60)
-        
-        TweenService:Create(circle, TweenInfo.new(0.2), {Position = targetPos}):Play()
-        TweenService:Create(toggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
-        callback(state)
-    end)
+    return sec
 end
 
-function ToriH:AddSlider(page, text, min, max, default, callback)
-    local frame = Create("Frame", {
-        Parent = page,
-        Size = UDim2.new(1, 0, 0, 55),
-        BackgroundColor3 = Color3.fromRGB(22, 22, 22),
-        BorderSizePixel = 0
-    })
-    Create("UICorner", {Parent = frame, CornerRadius = UDim.new(0, 6)})
-
-    local label = Create("TextLabel", {
-        Parent = frame,
-        Size = UDim2.new(1, -20, 0, 25),
-        Position = UDim2.new(0, 15, 0, 5),
-        BackgroundTransparency = 1,
-        Text = text,
-        Font = Enum.Font.Gotham,
-        TextColor3 = Color3.new(1, 1, 1),
-        TextSize = 14,
-        TextXAlignment = Enum.TextXAlignment.Left
-    })
-
-    local valLbl = Create("TextLabel", {
-        Parent = frame,
-        Size = UDim2.new(0, 40, 0, 25),
-        Position = UDim2.new(1, -50, 0, 5),
-        BackgroundTransparency = 1,
-        Text = tostring(default),
-        Font = Enum.Font.GothamBold,
-        TextColor3 = self.ThemeColor,
-        TextSize = 14
-    })
-
-    local sliderBar = Create("Frame", {
-        Parent = frame,
-        Size = UDim2.new(1, -30, 0, 6),
-        Position = UDim2.new(0, 15, 0, 38),
-        BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    })
-    Create("UICorner", {Parent = sliderBar})
-
-    local fill = Create("Frame", {
-        Parent = sliderBar,
-        Size = UDim2.new((default - min) / (max - min), 0, 1, 0),
-        BackgroundColor3 = self.ThemeColor
-    })
-    Create("UICorner", {Parent = fill})
-
-    local dragging = false
-    local function move()
-        local percent = math.clamp((Mouse.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
-        local val = math.floor(min + (max - min) * percent)
-        fill.Size = UDim2.new(percent, 0, 1, 0)
-        valLbl.Text = tostring(val)
-        callback(val)
-    end
-
-    sliderBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            move()
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            move()
-        end
-    end)
-
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-end
-
-function ToriH:AddButton(page, text, callback)
+-- BUTTON
+function ToriH:AddButton(tab, text, callback)
     local btn = Create("TextButton", {
-        Parent = page,
-        Size = UDim2.new(1, 0, 0, 38),
-        BackgroundColor3 = Color3.fromRGB(35, 35, 35),
-        Text = text,
-        Font = Enum.Font.GothamSemibold,
-        TextColor3 = Color3.new(1, 1, 1),
-        TextSize = 14,
-        AutoButtonColor = false
+        Parent = tab.Page, Size = UDim2.new(1, -10, 0, 40),
+        BackgroundColor3 = Color3.fromRGB(22, 22, 22), Text = "   " .. text,
+        TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamSemibold,
+        TextSize = 14, TextXAlignment = 0, AutoButtonColor = false
     })
-    Create("UICorner", {Parent = btn, CornerRadius = UDim.new(0, 6)})
-    Create("UIStroke", {Parent = btn, Color = Color3.fromRGB(50, 50, 50), Thickness = 1})
-
+    Create("UICorner", {Parent = btn})
+    local icon = Create("TextLabel", {
+        Parent = btn, Size = UDim2.new(0, 30, 1, 0), Position = UDim2.new(1, -35, 0, 0),
+        BackgroundTransparency = 1, Text = ">", TextColor3 = Color3.fromRGB(100, 100, 100),
+        Font = Enum.Font.GothamBold, TextSize = 14
+    })
+    
     btn.MouseButton1Click:Connect(function()
         Ripple(btn)
         callback()
     end)
 end
 
-function ToriH:CreateSettingsTab()
-    local page = self:CreateTab("Settings")
-    self:AddToggle(page, "RGB Border Effect", false, function(v) self.RGB = v end)
-    self:AddButton(page, "Re-play Intro", function() self:PlayIntro(self.Title, self.Author) end)
-    self:AddButton(page, "Unload Script", function() self.Gui:Destroy() end)
-end
+-- TOGGLE
+function ToriH:AddToggle(tab, text, def, callback)
+    local frame = Create("Frame", {
+        Parent = tab.Page, Size = UDim2.new(1, -10, 0, 45), BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+    })
+    Create("UICorner", {Parent = frame})
+    local l = Create("TextLabel", {
+        Parent = frame, Size = UDim2.new(1, -60, 1, 0), Position = UDim2.new(0, 15, 0, 0),
+        BackgroundTransparency = 1, Text = text, TextColor3 = Color3.new(1,1,1),
+        Font = Enum.Font.Gotham, TextSize = 14, TextXAlignment = 0
+    })
+    local tog = Create("TextButton", {
+        Parent = frame, Size = UDim2.new(0, 44, 0, 22), Position = UDim2.new(1, -55, 0.5, -11),
+        BackgroundColor3 = def and self.ThemeColor or Color3.fromRGB(50, 50, 50), Text = ""
+    })
+    Create("UICorner", {Parent = tog, CornerRadius = UDim.new(1, 0)})
+    local circ = Create("Frame", {
+        Parent = tog, Size = UDim2.new(0, 18, 0, 18), Position = def and UDim2.new(1, -21, 0.5, -9) or UDim2.new(0, 3, 0.5, -9),
+        BackgroundColor3 = Color3.new(1,1,1)
+    })
+    Create("UICorner", {Parent = circ, CornerRadius = UDim.new(1, 0)})
 
-return ToriH
-extColor3 = Color3.fromRGB(0, 0, 0)
-    end
-
-    return tab
-end
-
---========================================================--
---                     ELEMENTS
---========================================================--
-function ToriH:AddLabel(Tab, Text)
-    local lbl = Instance.new("TextLabel", Tab.Page)
-    lbl.Size = UDim2.new(1, -10, 0, 30)
-    lbl.Text = "  " .. Text
-    lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
-    lbl.Font = Enum.Font.GothamSemibold
-    lbl.TextSize = 14
-    lbl.BackgroundTransparency = 1
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    return lbl
-end
-
-function ToriH:AddButton(Tab, Text, Callback)
-    local btn = Instance.new("TextButton", Tab.Page)
-    btn.Size = UDim2.new(1, -10, 0, 40)
-    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    btn.Text = "  " .. Text
-    btn.TextColor3 = Color3.new(1, 1, 1)
-    btn.Font = Enum.Font.Gotham
-    btn.TextSize = 14
-    btn.TextXAlignment = Enum.TextXAlignment.Left
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-    
-    local stroke = Instance.new("UIStroke", btn)
-    stroke.Color = Color3.fromRGB(50,50,50)
-
-    btn.MouseButton1Click:Connect(function()
-        if Callback then Callback() end
-    end)
-    return btn
-end
-
-function ToriH:AddToggle(Tab, Text, Default, Callback)
-    local state = Default or false
-    local tog = Instance.new("TextButton", Tab.Page)
-    tog.Size = UDim2.new(1, -10, 0, 40)
-    tog.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    tog.Text = ""
-    Instance.new("UICorner", tog).CornerRadius = UDim.new(0, 6)
-
-    local lbl = Instance.new("TextLabel", tog)
-    lbl.Text = "  " .. Text
-    lbl.Size = UDim2.new(1, 0, 1, 0)
-    lbl.TextColor3 = Color3.new(1,1,1)
-    lbl.BackgroundTransparency = 1
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Font = Enum.Font.Gotham
-
-    local indicator = Instance.new("Frame", tog)
-    indicator.Size = UDim2.new(0, 44, 0, 22)
-    indicator.Position = UDim2.new(1, -55, 0.5, -11)
-    indicator.BackgroundColor3 = state and self.ThemeColor or Color3.fromRGB(60, 60, 60)
-    Instance.new("UICorner", indicator).CornerRadius = UDim.new(1, 0)
-
-    local circle = Instance.new("Frame", indicator)
-    circle.Size = UDim2.new(0, 18, 0, 18)
-    circle.Position = state and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)
-    circle.BackgroundColor3 = Color3.new(1, 1, 1)
-    Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
-
+    local s = def
     tog.MouseButton1Click:Connect(function()
-        state = not state
-        TweenService:Create(indicator, TweenInfo.new(0.3), {BackgroundColor3 = state and self.ThemeColor or Color3.fromRGB(60, 60, 60)}):Play()
-        circle:TweenPosition(state and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9), "Out", "Quart", 0.3, true)
-        if Callback then Callback(state) end
+        s = not s
+        TweenService:Create(tog, T_Info, {BackgroundColor3 = s and self.ThemeColor or Color3.fromRGB(50, 50, 50)}):Play()
+        circ:TweenPosition(s and UDim2.new(1, -21, 0.5, -9) or UDim2.new(0, 3, 0.5, -9), "Out", "Quart", 0.3)
+        callback(s)
     end)
 end
 
-function ToriH:AddSlider(Tab, Text, Min, Max, Default, Callback)
-    local frame = Instance.new("Frame", Tab.Page)
-    frame.Size = UDim2.new(1, -10, 0, 50)
-    frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6)
+-- SLIDER (RenderStepped Mượt)
+function ToriH:AddSlider(tab, text, min, max, def, callback)
+    local frame = Create("Frame", {
+        Parent = tab.Page, Size = UDim2.new(1, -10, 0, 65), BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+    })
+    Create("UICorner", {Parent = frame})
+    local l = Create("TextLabel", {
+        Parent = frame, Size = UDim2.new(1, -20, 0, 30), Position = UDim2.new(0, 15, 0, 5),
+        BackgroundTransparency = 1, Text = text, TextColor3 = Color3.new(1,1,1),
+        Font = Enum.Font.Gotham, TextSize = 14, TextXAlignment = 0
+    })
+    local valLbl = Create("TextLabel", {
+        Parent = frame, Size = UDim2.new(0, 50, 0, 30), Position = UDim2.new(1, -65, 0, 5),
+        BackgroundTransparency = 1, Text = tostring(def), TextColor3 = self.ThemeColor,
+        Font = Enum.Font.GothamBold, TextSize = 14, TextXAlignment = 2
+    })
+    local bar = Create("Frame", {
+        Parent = frame, Size = UDim2.new(1, -30, 0, 6), Position = UDim2.new(0, 15, 0, 45),
+        BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    })
+    Create("UICorner", {Parent = bar})
+    local fill = Create("Frame", {
+        Parent = bar, Size = UDim2.new((def-min)/(max-min), 0, 1, 0), BackgroundColor3 = self.ThemeColor
+    })
+    Create("UICorner", {Parent = fill})
 
-    local lbl = Instance.new("TextLabel", frame)
-    lbl.Text = "  " .. Text
-    lbl.Size = UDim2.new(1, -60, 0, 30)
-    lbl.TextColor3 = Color3.new(1,1,1)
-    lbl.BackgroundTransparency = 1
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Font = Enum.Font.Gotham
-
-    local valLbl = Instance.new("TextLabel", frame)
-    valLbl.Text = tostring(Default)
-    valLbl.Size = UDim2.new(0, 50, 0, 30)
-    valLbl.Position = UDim2.new(1, -55, 0, 0)
-    valLbl.TextColor3 = self.ThemeColor
-    valLbl.BackgroundTransparency = 1
-    valLbl.Font = Enum.Font.GothamBold
-
-    local bar = Instance.new("TextButton", frame)
-    bar.Size = UDim2.new(1, -24, 0, 6)
-    bar.Position = UDim2.new(0, 12, 0, 36)
-    bar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    bar.Text = ""
-    Instance.new("UICorner", bar)
-
-    local fill = Instance.new("Frame", bar)
-    fill.Size = UDim2.new((Default - Min) / (Max - Min), 0, 1, 0)
-    fill.BackgroundColor3 = self.ThemeColor
-    Instance.new("UICorner", fill)
-
-    local dragging = false
-    local function move()
-        local percent = math.clamp((Mouse.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
-        local val = math.floor(Min + (Max - Min) * percent)
-        fill.Size = UDim2.new(percent, 0, 1, 0)
-        valLbl.Text = tostring(val)
-        Callback(val)
+    local drag = false
+    local function upd()
+        local p = math.clamp((Mouse.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
+        local v = math.floor(min + (max - min) * p)
+        fill.Size = UDim2.new(p, 0, 1, 0)
+        valLbl.Text = tostring(v)
+        callback(v)
     end
-    bar.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end end)
-    UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
-    UserInputService.InputChanged:Connect(function(i) if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then move() end end)
+    bar.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then drag = true upd() end end)
+    UserInputService.InputChanged:Connect(function(i) if drag and i.UserInputType == Enum.UserInputType.MouseMovement then upd() end end)
+    UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then drag = false end end)
 end
 
-function ToriH:AddDropdown(Tab, Text, List, Callback)
-    local drop = Instance.new("Frame", Tab.Page)
-    drop.Size = UDim2.new(1, -10, 0, 40)
-    drop.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    drop.ClipsDescendants = true
-    Instance.new("UICorner", drop).CornerRadius = UDim.new(0, 6)
+-- COLOR PICKER (Hệ thống màu nâng cao)
+function ToriH:AddColorPicker(tab, text, def, callback)
+    local frame = Create("Frame", {
+        Parent = tab.Page, Size = UDim2.new(1, -10, 0, 45), BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+    })
+    Create("UICorner", {Parent = frame})
+    local l = Create("TextLabel", {Parent = frame, Size = UDim2.new(1, 0, 1, 0), Position = UDim2.new(0, 15, 0, 0), BackgroundTransparency = 1, Text = text, TextColor3 = Color3.new(1,1,1), Font = 17, TextSize = 14, TextXAlignment = 0})
     
-    local btn = Instance.new("TextButton", drop)
-    btn.Size = UDim2.new(1, 0, 0, 40)
-    btn.BackgroundTransparency = 1
-    btn.Text = "  " .. Text .. " : Select..."
-    btn.TextColor3 = Color3.new(1,1,1)
-    btn.Font = Enum.Font.Gotham
-    btn.TextSize = 14
-    btn.TextXAlignment = Enum.TextXAlignment.Left
+    local view = Create("TextButton", {
+        Parent = frame, Size = UDim2.new(0, 40, 0, 22), Position = UDim2.new(1, -50, 0.5, -11),
+        BackgroundColor3 = def, Text = ""
+    })
+    Create("UICorner", {Parent = view})
 
-    local container = Instance.new("Frame", drop)
-    container.Size = UDim2.new(1, 0, 0, #List * 30)
-    container.Position = UDim2.new(0, 0, 0, 40)
-    container.BackgroundTransparency = 1
-    Instance.new("UIListLayout", container)
+    view.MouseButton1Click:Connect(function()
+        -- Logic đơn giản: Đổi qua các màu chủ đạo (Bạn có thể thêm bảng màu GUI ở đây)
+        local colors = {Color3.new(1,0,0), Color3.new(0,1,0), Color3.new(0,0,1), Color3.new(1,1,0), Color3.new(1,1,1)}
+        local nextC = colors[math.random(1, #colors)]
+        view.BackgroundColor3 = nextC
+        callback(nextC)
+    end)
+end
 
-    local open = false
+-- KEYBIND
+function ToriH:AddKeybind(tab, text, def, callback)
+    local frame = Create("Frame", {
+        Parent = tab.Page, Size = UDim2.new(1, -10, 0, 45), BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+    })
+    Create("UICorner", {Parent = frame})
+    local l = Create("TextLabel", {Parent = frame, Size = UDim2.new(1, 0, 1, 0), Position = UDim2.new(0, 15, 0, 0), BackgroundTransparency = 1, Text = text, TextColor3 = Color3.new(1,1,1), Font = 17, TextSize = 14, TextXAlignment = 0})
+    
+    local currKey = def.Name
+    local btn = Create("TextButton", {
+        Parent = frame, Size = UDim2.new(0, 80, 0, 25), Position = UDim2.new(1, -90, 0.5, -12),
+        BackgroundColor3 = Color3.fromRGB(35, 35, 35), Text = currKey, TextColor3 = self.ThemeColor, Font = 17, TextSize = 13
+    })
+    Create("UICorner", {Parent = btn})
+
     btn.MouseButton1Click:Connect(function()
-        open = not open
-        drop:TweenSize(open and UDim2.new(1, -10, 0, 40 + (#List * 30)) or UDim2.new(1, -10, 0, 40), "Out", "Quart", 0.4, true)
+        btn.Text = "..."
+        local connection
+        connection = UserInputService.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Keyboard then
+                btn.Text = input.KeyCode.Name
+                callback(input.KeyCode)
+                connection:Disconnect()
+            end
+        end)
+    end)
+end
+
+-- DROPDOWN (Mượt và tự động điều chỉnh)
+function ToriH:AddDropdown(tab, text, list, callback)
+    local drop = Create("Frame", {
+        Parent = tab.Page, Size = UDim2.new(1, -10, 0, 45), BackgroundColor3 = Color3.fromRGB(22, 22, 22),
+        ClipsDescendants = true
+    })
+    Create("UICorner", {Parent = drop})
+    local btn = Create("TextButton", {
+        Parent = drop, Size = UDim2.new(1, 0, 0, 45), BackgroundTransparency = 1,
+        Text = "   " .. text .. " : Select...", TextColor3 = Color3.new(1,1,1), Font = 17, TextSize = 14, TextXAlignment = 0
+    })
+    local container = Create("Frame", {
+        Parent = drop, Size = UDim2.new(1, 0, 0, #list * 35), Position = UDim2.new(0,0,0,45), BackgroundTransparency = 1
+    })
+    Create("UIListLayout", {Parent = container})
+
+    local isDown = false
+    btn.MouseButton1Click:Connect(function()
+        isDown = not isDown
+        drop:TweenSize(isDown and UDim2.new(1,-10,0, 45 + (#list * 35)) or UDim2.new(1,-10,0,45), "Out", "Quart", 0.4)
     end)
 
-    for _, v in ipairs(List) do
-        local opt = Instance.new("TextButton", container)
-        opt.Size = UDim2.new(1, 0, 0, 30)
-        opt.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-        opt.Text = tostring(v)
-        opt.TextColor3 = Color3.fromRGB(200, 200, 200)
-        opt.Font = Enum.Font.Gotham
-        opt.TextSize = 13
-        opt.BorderSizePixel = 0
+    for _, v in pairs(list) do
+        local opt = Create("TextButton", {
+            Parent = container, Size = UDim2.new(1, 0, 0, 35), BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+            Text = tostring(v), TextColor3 = Color3.fromRGB(180, 180, 180), Font = 17, TextSize = 13, BorderSizePixel = 0
+        })
         opt.MouseButton1Click:Connect(function()
-            btn.Text = "  " .. Text .. " : " .. tostring(v)
-            open = false
-            drop:TweenSize(UDim2.new(1, -10, 0, 40), "Out", "Quart", 0.4, true)
-            Callback(v)
+            btn.Text = "   " .. text .. " : " .. tostring(v)
+            isDown = false
+            drop:TweenSize(UDim2.new(1,-10,0,45), "Out", "Quart", 0.4)
+            callback(v)
         end)
     end
 end
 
 --========================================================--
---                  SETTINGS TAB (New)
+--                  CORE SETTINGS
 --========================================================--
 function ToriH:CreateSettingsTab()
-    local sTab = self:CreateTab("Settings")
+    local s = self:CreateTab("Settings")
+    self:AddSection(s, "Interface Settings")
+    self:AddToggle(s, "Rainbow UI Border", false, function(v) self.RGB = v end)
+    self:AddKeybind(s, "Close UI Key", Enum.KeyCode.RightControl, function(k) self.Keybind = k end)
     
-    self:AddLabel(sTab, "UI Customization")
+    self:AddSection(s, "Themes")
+    self:AddButton(s, "Theme: Neon Green", function() self.ThemeColor = self.Themes.Default end)
+    self:AddButton(s, "Theme: Ruby Red", function() self.ThemeColor = self.Themes.Ruby end)
+    self:AddButton(s, "Theme: Ocean Blue", function() self.ThemeColor = self.Themes.Ocean end)
     
-    self:AddToggle(sTab, "Rainbow Border (RGB)", false, function(v)
-        self.RGB = v
-    end)
-    
-    self:AddButton(sTab, "Theme: Green (Default)", function()
-        self.ThemeColor = Color3.fromRGB(120, 255, 100)
-        self:Notify("Theme", "Updated to Neon Green", 2)
-    end)
-
-    self:AddButton(sTab, "Theme: Ocean Blue", function()
-        self.ThemeColor = Color3.fromRGB(0, 180, 255)
-        self:Notify("Theme", "Updated to Ocean Blue", 2)
-    end)
-
-    self:AddButton(sTab, "Theme: Ruby Red", function()
-        self.ThemeColor = Color3.fromRGB(255, 60, 60)
-        self:Notify("Theme", "Updated to Ruby Red", 2)
-    end)
-
-    self:AddSlider(sTab, "Background Transparency", 0, 100, 0, function(v)
-        self.MainFrame.BackgroundTransparency = v/100
-    end)
-
-    self:AddButton(sTab, "Destroy Script", function()
-        self.ScreenGui:Destroy()
-    end)
+    self:AddSection(s, "System")
+    self:AddButton(s, "Unload Script", function() self.Gui:Destroy() end)
+    self:AddButton(s, "Copy Discord Link", function() setclipboard("discord.gg/torihub") end)
 end
 
---========================================================--
---                     STARTUP TEST
---========================================================--
 return ToriH
